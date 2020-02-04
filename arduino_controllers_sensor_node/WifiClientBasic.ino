@@ -2,21 +2,22 @@
     This sketch sends a string to a TCP server, and prints a one-line response.
     You must run a TCP server in your local network.
     For example, on Linux you can use this command: nc -v -l 3000
+	SET <> INSIDE PARAMETERS
 */
 
 #include <ESP8266WiFi.h>
 #include <ESP8266WiFiMulti.h>
 
 #ifndef STASSID
-#define STASSID "VTR-6198796"
-#define STAPSK  "vt7Lvtxhktvc"
+#define STASSID "<SSID>"
+#define STAPSK  "<PASSWORD>"
 #endif
 
 const char* ssid     = STASSID;
 const char* password = STAPSK;
 
-const char* host = "192.168.0.11";
-const uint16_t port = 3000;
+const char* host = "<HOST IP>";
+const uint16_t port = <PORT>;
 
 ESP8266WiFiMulti WiFiMulti;
 
@@ -60,7 +61,6 @@ void loop() {
     delay(5000);
     return;
   }
-
   // This will send the request to the server
   client.println("hello from ESP8266");
 
