@@ -236,6 +236,24 @@ void sense_temp(){
   Serial.println(hic);
 }
 
+float get_hic(){
+  float h = dht.readHumidity();
+  float t = dht.readTemperature();
+  float hic = dht.computeHeatIndex(t, h, false);
+  return hic;
+}
+
+float get_humidity(){
+  float h = dht.readHumidity();
+  return h;
+}
+
+void hic_formatted(float hic, char* buf){
+  char temp_buf[10];
+  dtostrf(hic, 6, 3, temp_buf);
+  strcat(buf, temp_buf);
+}
+
 void setup() {
   pinMode(BUILTIN_LED, OUTPUT);     // Initialize the BUILTIN_LED pin as an output
 
@@ -260,14 +278,22 @@ void loop() {
   }
   client.loop();
 
+  float hic = get_hic();
+  char msg_real[50];
+  strcpy_P(msg_real, "Room Temperature (°C): ");
+  hic_formatted(hic, msg_real);
+  
   long now = millis();
   if (now - lastMsg > 2000) {
     lastMsg = now;
     ++value;
     snprintf (msg, 50, "hello world #%ld", value);
+    //snprintf (msg, 50, "hello world #%ld", hic);
     Serial.print("Publish message: ");
-    Serial.println(msg);
-    client.publish("bems/room/temperature", msg);
-    sense_temp();
+    //Serial.println(msg);
+    Serial.println(msg_real);
+    //client.publish("bems/room/temperature", msg);
+    client.publish("bems/room/temperature", msg_real);
+    //sense_temp();
   }
 }
