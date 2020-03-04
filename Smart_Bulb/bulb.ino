@@ -1,21 +1,21 @@
 /*
- Basic ESP8266 MQTT example
+  Basic ESP8266 MQTT example
 
- This sketch demonstrates the capabilities of the pubsub library in combination
- with the ESP8266 board/library.
+  This sketch demonstrates the capabilities of the pubsub library in combination
+  with the ESP8266 board/library.
 
- It connects to an MQTT server then:
+  It connects to an MQTT server then:
   - publishes "hello world" to the topic "outTopic" every two seconds
   - subscribes to the topic "inTopic", printing out any messages
     it receives. NB - it assumes the received payloads are strings not binary
   - If the first character of the topic "inTopic" is an 1, switch ON the ESP Led,
     else switch it off
 
- It will reconnect to the server if the connection is lost using a blocking
- reconnect function. See the 'mqtt_reconnect_nonblocking' example for how to
- achieve the same result without blocking the main loop.
+  It will reconnect to the server if the connection is lost using a blocking
+  reconnect function. See the 'mqtt_reconnect_nonblocking' example for how to
+  achieve the same result without blocking the main loop.
 
- To install the ESP8266 board, (using Arduino 1.6.4+):
+  To install the ESP8266 board, (using Arduino 1.6.4+):
   - Add the following 3rd party board manager under "File -> Preferences -> Additional Boards Manager URLs":
        http://arduino.esp8266.com/stable/package_esp8266com_index.json
   - Open the "Tools -> Board -> Board Manager" and click install for the ESP8266"
@@ -31,21 +31,26 @@
 #define LED_YELLOW D2
 #define LED_GREEN  D3
 #define LED_BLUE   D4
+#define DHTTYPE    DHT22
 
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
+#include "DHT.h"
 
 // Update these with values suitable for your network.
 
 const char* ssid = "Evilness";
 const char* password = "todocalzapollo";
-const char* mqtt_server = "192.168.43.214";
+const char* mqtt_server = "192.168.43.156";
 
 WiFiClient espClient;
 PubSubClient client(espClient);
 long lastMsg = 0;
 char msg[50];
 int value = 0;
+
+uint8_t DHTPIN = D7;
+DHT dht(DHTPIN, DHTTYPE);
 
 void setup_wifi() {
 
@@ -70,8 +75,8 @@ void setup_wifi() {
   Serial.println(WiFi.localIP());
 }
 
-int illumination_level(char led_illumination){
-  switch(led_illumination){
+int illumination_level(char led_illumination) {
+  switch (led_illumination) {
     case '1':
       return 256;
     case '2':
@@ -83,7 +88,7 @@ int illumination_level(char led_illumination){
   }
 }
 
-void handle_change(byte* payload){
+void handle_change(byte* payload) {
   Serial.println("Inside handle_change");
   Serial.println((char*)payload);
   String data = (char*)payload;
@@ -92,10 +97,17 @@ void handle_change(byte* payload){
   Serial.println(data[0]);
   Serial.println(data[1]);
   // Turn OFF led in position 0 indepedent from its Duty Cycle
-  if ((char)payload[1] == '0'){
+  if ((char)payload[1] == '0') {
     Serial.println("Enters first if");
     char led_id = (char)payload[0];
     switch (led_id) {
+      case '0':
+        Serial.println("Turning OFF ALL LEDS");
+        analogWrite(LED_RED, 0);
+        analogWrite(LED_YELLOW, 0);
+        analogWrite(LED_GREEN, 0);
+        analogWrite(LED_BLUE, 0);
+        break;
       case '1':
         Serial.println("Turning OFF RED");
         analogWrite(LED_RED, 0);
@@ -113,30 +125,36 @@ void handle_change(byte* payload){
         analogWrite(LED_BLUE, 0);
         break;
     }
-  } else{
+  } else {
     Serial.println("Enters else");
     char led_id = (char)payload[0];
     char led_illumination = (char)payload[2];
-    switch (led_id){
+    switch (led_id) {
+      case '0':
+        Serial.println("Changing illumination of ALL LEDS");
+        analogWrite(LED_RED, illumination_level(led_illumination));
+        analogWrite(LED_YELLOW, illumination_level(led_illumination));
+        analogWrite(LED_GREEN, illumination_level(led_illumination));
+        analogWrite(LED_BLUE, illumination_level(led_illumination));
+        break;
       case '1':
         Serial.println("Changing illumination of RED");
         analogWrite(LED_RED, illumination_level(led_illumination));
         break;
-     case '2':
+      case '2':
         Serial.println("Changing illumination of YELLOW");
         analogWrite(LED_YELLOW, illumination_level(led_illumination));
         break;
-     case '3':
+      case '3':
         Serial.println("Changing illumination of GREEN");
         analogWrite(LED_GREEN, illumination_level(led_illumination));
         break;
-     case '4':
+      case '4':
         Serial.println("Changing illumination of BLUE");
         analogWrite(LED_BLUE, illumination_level(led_illumination));
         break;
     }
   }
-  
 }
 
 void callback(char* topic, byte* payload, unsigned int length) {
@@ -150,11 +168,11 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
   // Switch on the LED if an 1 was received as first character
   //if ((char)payload[0] == '1') {
-    //digitalWrite(BUILTIN_LED, LOW);   // Turn the LED on (Note that LOW is the voltage level
-    // but actually the LED is on; this is because
-    // it is active low on the ESP-01)
+  //digitalWrite(BUILTIN_LED, LOW);   // Turn the LED on (Note that LOW is the voltage level
+  // but actually the LED is on; this is because
+  // it is active low on the ESP-01)
   //} else {
-    //digitalWrite(BUILTIN_LED, HIGH);  // Turn the LED off by making the voltage HIGH
+  //digitalWrite(BUILTIN_LED, HIGH);  // Turn the LED off by making the voltage HIGH
   //}
   Serial.println("Before handle_change");
   handle_change(payload);
@@ -185,16 +203,37 @@ void reconnect() {
   }
 }
 
-void set_PWM(){
+void set_PWM() {
   pinMode(LED_RED, OUTPUT);
   pinMode(LED_YELLOW, OUTPUT);
   pinMode(LED_GREEN, OUTPUT);
   pinMode(LED_BLUE, OUTPUT);
-  
+
   analogWrite(LED_RED, 512);
   analogWrite(LED_YELLOW, 512);
   analogWrite(LED_GREEN, 512);
   analogWrite(LED_BLUE, 512);
+}
+
+void sense_temp(){
+  delay(100);
+  float h = dht.readHumidity();
+  float t = dht.readTemperature();
+
+  if (isnan(h) || isnan(t)){
+    Serial.println(F("Failed to read from DHT Sensor !!"));
+    return;
+  }
+
+  float hic = dht.computeHeatIndex(t, h, false);
+
+  Serial.print(F("Humidity: "));
+  Serial.println(h);
+  Serial.print(F("%  Temperature: "));
+  Serial.print(t);
+  Serial.println(F("°C "));
+  Serial.print(F("°C  Heat index: "));
+  Serial.println(hic);
 }
 
 void setup() {
@@ -202,11 +241,16 @@ void setup() {
 
   // LED Config for PWM
   set_PWM();
-  
+
   Serial.begin(115200);
   setup_wifi();
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
+
+  // DHT22 Config
+  pinMode(DHTPIN, INPUT);
+  dht.begin();
+  
 }
 
 void loop() {
@@ -224,5 +268,6 @@ void loop() {
     Serial.print("Publish message: ");
     Serial.println(msg);
     client.publish("bems/room/temperature", msg);
+    sense_temp();
   }
 }
