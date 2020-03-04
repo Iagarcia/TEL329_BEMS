@@ -1,0 +1,153 @@
+[
+    {
+        "id": "d12f6ee5.2b2ad8",
+        "type": "tab",
+        "label": "Flow 1",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "8d5249a6.09bee8",
+        "type": "mqtt in",
+        "z": "d12f6ee5.2b2ad8",
+        "name": "Temperature",
+        "topic": "bems/room/temperature",
+        "qos": "2",
+        "datatype": "auto",
+        "broker": "72346b48.86828c",
+        "x": 370,
+        "y": 320,
+        "wires": [
+            [
+                "325ab032.564938"
+            ]
+        ]
+    },
+    {
+        "id": "325ab032.564938",
+        "type": "debug",
+        "z": "d12f6ee5.2b2ad8",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "x": 650,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "e739fe71.b84938",
+        "type": "mqtt out",
+        "z": "d12f6ee5.2b2ad8",
+        "name": "Lights",
+        "topic": "bems/room/light",
+        "qos": "2",
+        "retain": "false",
+        "broker": "72346b48.86828c",
+        "x": 630,
+        "y": 440,
+        "wires": []
+    },
+    {
+        "id": "47800ba5.20b23c",
+        "type": "inject",
+        "z": "d12f6ee5.2b2ad8",
+        "name": "",
+        "topic": "bems/room/light",
+        "payload": "000",
+        "payloadType": "str",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "x": 150,
+        "y": 560,
+        "wires": [
+            [
+                "e739fe71.b84938"
+            ]
+        ]
+    },
+    {
+        "id": "75972754.c26a98",
+        "type": "function",
+        "z": "d12f6ee5.2b2ad8",
+        "name": "RandomMSG",
+        "func": "let p1 = Math.floor(Math.random() * 4);\nlet p2 = Math.random() < 0.5 ? 0 : 1;\nlet p3 = p2 === 1 ? Math.floor(Math.random() * 3) + 1 : 0;\nmsg.payload = p1.toString() + p2.toString() + p3.toString()\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 380,
+        "y": 440,
+        "wires": [
+            [
+                "e739fe71.b84938",
+                "325ab032.564938"
+            ]
+        ]
+    },
+    {
+        "id": "176491e0.09cc8e",
+        "type": "inject",
+        "z": "d12f6ee5.2b2ad8",
+        "name": "",
+        "topic": "bems/room/light",
+        "payload": "014",
+        "payloadType": "str",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "x": 150,
+        "y": 600,
+        "wires": [
+            [
+                "e739fe71.b84938"
+            ]
+        ]
+    },
+    {
+        "id": "34c2ea1f.1d6de6",
+        "type": "inject",
+        "z": "d12f6ee5.2b2ad8",
+        "name": "",
+        "topic": "bems/room/light",
+        "payload": "any",
+        "payloadType": "str",
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "x": 150,
+        "y": 440,
+        "wires": [
+            [
+                "75972754.c26a98"
+            ]
+        ]
+    },
+    {
+        "id": "72346b48.86828c",
+        "type": "mqtt-broker",
+        "z": "",
+        "name": "RPi",
+        "broker": "localhost",
+        "port": "1883",
+        "clientid": "",
+        "usetls": false,
+        "compatmode": false,
+        "keepalive": "60",
+        "cleansession": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": ""
+    }
+]
